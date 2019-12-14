@@ -5,6 +5,10 @@ if($_GET['req']=="routes"){
     $query="SELECT * from Route_6";
     $result=mysqli_query($conn,$query);
     while($row=mysqli_fetch_assoc($result)){
+        $tempLat=floatval($row['latitude']);
+        $tempLong=floatval($row['longitude']);
+        $row['latitude']=$tempLat;
+        $row['longitude']=$tempLong;
         $emparray[] = $row;
     }
     echo json_encode($emparray);
@@ -13,7 +17,13 @@ else if($_GET['id']==5){
     $query="SELECT * from Route_5";
     $result=mysqli_query($conn,$query);
     while($row=mysqli_fetch_assoc($result)){
+        $tempLat=floatval($row['latitude']);
+        $tempLong=floatval($row['longitude']);
+        $row['latitude']=$tempLat;
+        $row['longitude']=$tempLong;
         $emparray[] = $row;
+
+      
     }
     echo json_encode($emparray);
 }
@@ -36,6 +46,18 @@ else if($_GET['req']=="updatebus"){
 mysqli_close($conn);
     
 
+}
+else if($_GET['req']=="getlocations"){
+    $query="SELECT * from Buses";
+    $result=mysqli_query($conn,$query);
+    while($row=mysqli_fetch_assoc($result)){
+        $tempLat=floatval($row['latitude']);
+        $tempLong=floatval($row['longitude']);
+        $row['latitude']=$tempLat;
+        $row['longitude']=$tempLong;
+        $emparray[] = $row;
+    }
+    echo json_encode($emparray);
 }
 
 ?>

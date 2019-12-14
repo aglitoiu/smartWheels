@@ -7,6 +7,7 @@ import {
   Platform,
   PermissionsAndroid
 } from "react-native";
+import {Icon} from 'react-native-elements';
 import MapView, {
   Marker,
   AnimatedRegion,
@@ -22,12 +23,13 @@ const LATITUDE_DELTA = 0.009;
 const LONGITUDE_DELTA = 0.009;
 const LATITUDE = 45.656049;
 const LONGITUDE = 25.602952;
-
+var loaded=0;
 class smartWheels extends React.Component {
   constructor(props) {
     super(props);
     
     this.state = {
+
       latitude: LATITUDE,
       longitude: LONGITUDE,
       route5Coordinates: [],
@@ -43,6 +45,7 @@ class smartWheels extends React.Component {
     };
     this.getData();
   }
+
   getData = async()=>{
     fetchSDClass=new fetchServerData();
     await fetchSDClass.getRoutesData('routes',6).then(function(resp){
@@ -59,7 +62,7 @@ class smartWheels extends React.Component {
         this.setState({
           route6Coordinates:route6Coordinates.concat([Object({latitude:parseFloat(resp[i].latitude),longitude:parseFloat(resp[i].longitude)})])
         })
-        console.log(this.state.route6Coordinates);
+        
       }
     this.setState({
       
@@ -70,19 +73,14 @@ class smartWheels extends React.Component {
   await fetchSDClass.getRoutesData('routes',5).then(function(resp){
     var latitude;
     var longitude;
-    var tempCoordinate = {
-      latitude,
-      longitude
-    };
+
     
-    for(var i=0;i<resp.length ;i++){
-      const { route5Coordinates } = this.state;
 
       this.setState({
-        route5Coordinates:route5Coordinates.concat([Object({latitude:parseFloat(resp[i].latitude),longitude:parseFloat(resp[i].longitude)})])
+        route5Coordinates:resp
       })
-      console.log(this.state.route5Coordinates);
-    }
+      
+    
   this.setState({
     
     loading:false
@@ -93,7 +91,26 @@ class smartWheels extends React.Component {
 
 
   }
+  getBuses = async()=> {
+    await fetchSDClass.getLocations().then(function(resp){
+      var latitude;
+      var longitude;
+      var tempCoordinate = {
+        latitude,
+        longitude
+      };
+      tempCoordinate.latitude=parseFloat(resp[0].latitude);
+      tempCoordinate.longitude=parseFloat(resp[0].longitude);
+      this.setState({
+        coordinate:tempCoordinate
+      })
+  }.bind(this));
+  
+  };
   async componentDidMount() {
+    this.interval = setInterval(() => this.getBuses(), 1000);
+   
+  
     const { coordinate } = this.state;
 
     this.watchID = navigator.geolocation.watchPosition(
@@ -106,21 +123,12 @@ class smartWheels extends React.Component {
           longitude
         };
 
-        if (Platform.OS === "android") {
-          if (this.marker) {
-            this.marker._component.animateMarkerToCoordinate(
-              newCoordinate,
-              500
-            );
-          }
-        } else {
-          coordinate.timing(newCoordinate).start();
-        }
+       
 
         this.setState({
           latitude,
           longitude,
-          
+           
           distanceTravelled:
             distanceTravelled + this.calcDistance(newCoordinate),
           prevLatLng: newCoordinate
@@ -137,10 +145,12 @@ class smartWheels extends React.Component {
   }
 
   componentWillUnmount() {
+    clearInterval(this.interval);
     navigator.geolocation.clearWatch(this.watchID);
   }
 
   getMapRegion = () => ({
+    
     latitude: this.state.latitude,
     longitude: this.state.longitude,
     latitudeDelta: LATITUDE_DELTA,
@@ -151,26 +161,34 @@ class smartWheels extends React.Component {
     const { prevLatLng } = this.state;
     return haversine(prevLatLng, newLatLng) || 0;
   };
+  
 
   render() {
+    
     return (
       <View style={styles.container}>
         <MapView
+        minZoomLevel={6}  // default => 0
+        maxZoomLevel={15} // default => 20
           style={styles.map}
           provider={PROVIDER_GOOGLE}
-          showUserLocation
-          followUserLocation
+
           loadingEnabled
-          region={this.getMapRegion()}
+          
+          initialRegion={this.getMapRegion()}
         >
           <Polyline strokeColor="red"  coordinates={this.state.route6Coordinates} strokeWidth={5} />
           <Polyline strokeColor="blue" coordinates={this.state.route5Coordinates} strokeWidth={5} />
           <Marker.Animated
+            anchor={{ x: 0.5, y: 0.6 }}
             ref={marker => {
               this.marker = marker;
             }}
+            
             coordinate={this.state.coordinate}
-          />
+          >
+            <Icon name="bus" reverse type="font-awesome"/>
+            </Marker.Animated>
         </MapView>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.bubble, styles.button]}>

@@ -47,6 +47,46 @@ class fetchServerData extends React.Component {
     return responsss;
 
   }
+  getLocations = async () => {
+
+
+    var resp;
+    const fetchServer = fetch(Host + 'index.php?req=getlocations',
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        /* body: JSON.stringify({
+        
+           email: UserEmail,
+        
+           password: UserPassword
+        
+         })*/
+
+      });
+    const Jsonpromise = fetchServer.then((response) => response.json()).then((responseJson) => {
+
+
+
+      // If server response message same as Data Matched
+      return responseJson;
+
+
+
+    }).catch((error) => {
+      console.error(error);
+    });
+
+
+
+
+    responsss = await Jsonpromise;
+    return responsss;
+
+  }
   loginUser = async (user,pass) => {
    
 

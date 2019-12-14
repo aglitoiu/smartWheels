@@ -13,25 +13,24 @@ import MapView, {
   Polyline,
   PROVIDER_GOOGLE
 } from "react-native-maps";
+import * as Permissions from "expo-permissions";
 import haversine from "haversine";
-var fetchServerData = require('./Classes/fetchServerData.js');
-
+var serverClass = require('./Classes/serverClass.js');
 // const LATITUDE = 29.95539;
 // const LONGITUDE = 78.07513;
 const LATITUDE_DELTA = 0.009;
 const LONGITUDE_DELTA = 0.009;
-const LATITUDE = 45.656049;
-const LONGITUDE = 25.602952;
+const LATITUDE = 37.78825;
+const LONGITUDE = -122.4324;
 
-class smartWheels extends React.Component {
+class AnimatedMarkers extends React.Component {
   constructor(props) {
     super(props);
-    
+
     this.state = {
       latitude: LATITUDE,
       longitude: LONGITUDE,
-      route5Coordinates: [],
-      route6Coordinates: [],
+     
       distanceTravelled: 0,
       prevLatLng: {},
       coordinate: new AnimatedRegion({
@@ -41,64 +40,33 @@ class smartWheels extends React.Component {
         longitudeDelta: 0
       })
     };
-    this.getData();
   }
-  getData = async()=>{
-    fetchSDClass=new fetchServerData();
-    await fetchSDClass.getRoutesData('routes',6).then(function(resp){
-      var latitude;
-      var longitude;
-      var tempCoordinate = {
-        latitude,
-        longitude
-      };
-      
-      for(var i=0;i<resp.length ;i++){
-        const { route6Coordinates } = this.state;
-
-        this.setState({
-          route6Coordinates:route6Coordinates.concat([Object({latitude:parseFloat(resp[i].latitude),longitude:parseFloat(resp[i].longitude)})])
-        })
-        console.log(this.state.route6Coordinates);
+  getLocationAsync() {
+    // permissions returns only for location permissions on iOS and under certain conditions, see Permissions.LOCATION
+    Permissions.askAsync(Permissions.LOCATION).then((promise) => {
+      if (promise.status === 'granted') {
+        this.setState({ permGranted: true });
+        //this.loadMapData();
+        return 'yes';
+      } else {
+        this.setState({ permGranted: false });
+        throw new Error('Location permission not granted');
       }
-    this.setState({
-      
-      loading:false
     });
-  }.bind(this));
-
-  await fetchSDClass.getRoutesData('routes',5).then(function(resp){
-    var latitude;
-    var longitude;
-    var tempCoordinate = {
-      latitude,
-      longitude
-    };
-    
-    for(var i=0;i<resp.length ;i++){
-      const { route5Coordinates } = this.state;
-
-      this.setState({
-        route5Coordinates:route5Coordinates.concat([Object({latitude:parseFloat(resp[i].latitude),longitude:parseFloat(resp[i].longitude)})])
-      })
-      console.log(this.state.route5Coordinates);
-    }
-  this.setState({
-    
-    loading:false
-  });
-}.bind(this));
-
-
-
-
   }
-  async componentDidMount() {
+  sendLocation = async(busid,latitude,longitude)=>{
+    sendToServer=new serverClass();
+    await sendToServer.sendLocation(busid,latitude,longitude).then(function(resp){
+      
+    }.bind(this));
+  }
+  componentDidMount() {
+    this.getLocationAsync();
     const { coordinate } = this.state;
 
     this.watchID = navigator.geolocation.watchPosition(
       position => {
-        const { routeCoordinates, distanceTravelled } = this.state;
+        const { distanceTravelled } = this.state;
         const { latitude, longitude } = position.coords;
 
         const newCoordinate = {
@@ -106,16 +74,11 @@ class smartWheels extends React.Component {
           longitude
         };
 
-        if (Platform.OS === "android") {
-          if (this.marker) {
-            this.marker._component.animateMarkerToCoordinate(
-              newCoordinate,
-              500
-            );
-          }
-        } else {
+      
           coordinate.timing(newCoordinate).start();
-        }
+
+        this.sendLocation(1,newCoordinate.latitude,newCoordinate.longitude);
+        
 
         this.setState({
           latitude,
@@ -163,8 +126,7 @@ class smartWheels extends React.Component {
           loadingEnabled
           region={this.getMapRegion()}
         >
-          <Polyline strokeColor="red"  coordinates={this.state.route6Coordinates} strokeWidth={5} />
-          <Polyline strokeColor="blue" coordinates={this.state.route5Coordinates} strokeWidth={5} />
+         
           <Marker.Animated
             ref={marker => {
               this.marker = marker;
@@ -217,4 +179,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default smartWheels;
+export default AnimatedMarkers;

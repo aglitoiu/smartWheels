@@ -34,6 +34,7 @@ class smartWheels extends React.Component {
       longitude: LONGITUDE,
       route5Coordinates: [],
       route6Coordinates: [],
+      busCoordinates:[],
       distanceTravelled: 0,
       prevLatLng: {},
       coordinate: new AnimatedRegion({
@@ -93,16 +94,9 @@ class smartWheels extends React.Component {
   }
   getBuses = async()=> {
     await fetchSDClass.getLocations().then(function(resp){
-      var latitude;
-      var longitude;
-      var tempCoordinate = {
-        latitude,
-        longitude
-      };
-      tempCoordinate.latitude=parseFloat(resp[0].latitude);
-      tempCoordinate.longitude=parseFloat(resp[0].longitude);
+
       this.setState({
-        coordinate:tempCoordinate
+        busCoordinates:resp
       })
   }.bind(this));
   
@@ -111,37 +105,9 @@ class smartWheels extends React.Component {
     this.interval = setInterval(() => this.getBuses(), 1000);
    
   
-    const { coordinate } = this.state;
+ 
 
-    this.watchID = navigator.geolocation.watchPosition(
-      position => {
-        const { routeCoordinates, distanceTravelled } = this.state;
-        const { latitude, longitude } = position.coords;
-
-        const newCoordinate = {
-          latitude,
-          longitude
-        };
-
-       
-
-        this.setState({
-          latitude,
-          longitude,
-           
-          distanceTravelled:
-            distanceTravelled + this.calcDistance(newCoordinate),
-          prevLatLng: newCoordinate
-        });
-      },
-      error => console.log(error),
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 1000,
-        distanceFilter: 10
-      }
-    );
+    
   }
 
   componentWillUnmount() {
@@ -179,16 +145,21 @@ class smartWheels extends React.Component {
         >
           <Polyline strokeColor="red"  coordinates={this.state.route6Coordinates} strokeWidth={5} />
           <Polyline strokeColor="blue" coordinates={this.state.route5Coordinates} strokeWidth={5} />
+          {this.state.busCoordinates.map(marker=>(
+          
           <Marker.Animated
+            key={marker.id}
             anchor={{ x: 0.5, y: 0.6 }}
             ref={marker => {
               this.marker = marker;
             }}
-            
-            coordinate={this.state.coordinate}
+          
+            coordinate={{latitude:marker.latitude,longitude:marker.longitude}}
+
           >
             <Icon name="bus" reverse type="font-awesome"/>
             </Marker.Animated>
+            ))}
         </MapView>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.bubble, styles.button]}>

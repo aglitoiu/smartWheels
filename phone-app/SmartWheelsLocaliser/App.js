@@ -7,6 +7,7 @@ import {
   Platform,
   PermissionsAndroid
 } from "react-native";
+import { Button } from 'react-native-elements';
 import MapView, {
   Marker,
   AnimatedRegion,
@@ -28,6 +29,7 @@ class AnimatedMarkers extends React.Component {
     super(props);
 
     this.state = {
+      busId:0,
       latitude: LATITUDE,
       longitude: LONGITUDE,
      
@@ -77,7 +79,7 @@ class AnimatedMarkers extends React.Component {
       
           coordinate.timing(newCoordinate).start();
 
-        this.sendLocation(1,newCoordinate.latitude,newCoordinate.longitude);
+        this.sendLocation(this.state.busId,newCoordinate.latitude,newCoordinate.longitude);
         
 
         this.setState({
@@ -136,9 +138,16 @@ class AnimatedMarkers extends React.Component {
         </MapView>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.bubble, styles.button]}>
-            <Text style={styles.bottomBarContent}>
-              {parseFloat(this.state.distanceTravelled).toFixed(2)} km
-            </Text>
+          <Button
+  title="BusId:1"
+  type="clear"
+  onPress={()=>{this.setState({busId:1})}}
+/>
+<Button
+  title="BusId:2"
+  type="clear"
+  onPress={()=>{this.setState({busId:2})}}
+/>
           </TouchableOpacity>
         </View>
       </View>

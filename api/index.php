@@ -27,6 +27,34 @@ else if($_GET['id']==5){
     }
     echo json_encode($emparray);
 }
+else if($_GET['id']=="bvct"){
+    $query="SELECT * from Route_BvCt";
+    $result=mysqli_query($conn,$query);
+    while($row=mysqli_fetch_assoc($result)){
+        $tempLat=floatval($row['latitude']);
+        $tempLong=floatval($row['longitude']);
+        $row['latitude']=$tempLat;
+        $row['longitude']=$tempLong;
+        $emparray[] = $row;
+
+      
+    }
+    echo json_encode($emparray);
+}
+else if($_GET['id']=="bvsb"){
+    $query="SELECT * from Route_BvSb";
+    $result=mysqli_query($conn,$query);
+    while($row=mysqli_fetch_assoc($result)){
+        $tempLat=floatval($row['latitude']);
+        $tempLong=floatval($row['longitude']);
+        $row['latitude']=$tempLat;
+        $row['longitude']=$tempLong;
+        $emparray[] = $row;
+
+      
+    }
+    echo json_encode($emparray);
+}
 
 }
 else if($_GET['req']=="updatebus"){
@@ -48,7 +76,8 @@ mysqli_close($conn);
 
 }
 else if($_GET['req']=="getlocations"){
-    $query="SELECT * from Buses";
+    $type=$_GET['type'];
+    $query="SELECT * from $type";
     $result=mysqli_query($conn,$query);
     while($row=mysqli_fetch_assoc($result)){
         $tempLat=floatval($row['latitude']);

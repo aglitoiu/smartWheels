@@ -7,7 +7,7 @@ import {
   Platform,
   PermissionsAndroid
 } from "react-native";
-import {Icon} from 'react-native-elements';
+import {Icon,Button} from 'react-native-elements';
 import MapView, {
   Marker,
   AnimatedRegion,
@@ -35,6 +35,7 @@ class smartWheels extends React.Component {
       route5Coordinates: [],
       route6Coordinates: [],
       busCoordinates:[],
+      trainCoordinates:[],
       distanceTravelled: 0,
       prevLatLng: {},
       coordinate: new AnimatedRegion({
@@ -50,42 +51,36 @@ class smartWheels extends React.Component {
   getData = async()=>{
     fetchSDClass=new fetchServerData();
     await fetchSDClass.getRoutesData('routes',6).then(function(resp){
-      var latitude;
-      var longitude;
-      var tempCoordinate = {
-        latitude,
-        longitude
-      };
-      
-      for(var i=0;i<resp.length ;i++){
-        const { route6Coordinates } = this.state;
-
         this.setState({
-          route6Coordinates:route6Coordinates.concat([Object({latitude:parseFloat(resp[i].latitude),longitude:parseFloat(resp[i].longitude)})])
+          route6Coordinates:resp
         })
-        
-      }
-    this.setState({
-      
-      loading:false
-    });
   }.bind(this));
 
   await fetchSDClass.getRoutesData('routes',5).then(function(resp){
-    var latitude;
-    var longitude;
-
-    
-
       this.setState({
         route5Coordinates:resp
       })
-      
+}.bind(this));
+
+await fetchSDClass.getRoutesData('routes','bvct').then(function(resp){
+    this.setState({
+      routeBvCtCoordinates:resp
+    })
+}.bind(this));
+await fetchSDClass.getRoutesData('routes','bvsb').then(function(resp){
+
+
+  
+
+    this.setState({
+      routeBvSbCoordinates:resp
+    })
     
-  this.setState({
-    
-    loading:false
-  });
+  
+this.setState({
+  
+  loading:false
+});
 }.bind(this));
 
 
@@ -93,12 +88,18 @@ class smartWheels extends React.Component {
 
   }
   getBuses = async()=> {
-    await fetchSDClass.getLocations().then(function(resp){
+    await fetchSDClass.getLocations("Buses").then(function(resp){
 
       this.setState({
         busCoordinates:resp
       })
   }.bind(this));
+  await fetchSDClass.getLocations("Trains").then(function(resp){
+
+    this.setState({
+      trainCoordinates:resp
+    })
+}.bind(this));
   
   };
   async componentDidMount() {
@@ -127,10 +128,15 @@ class smartWheels extends React.Component {
     const { prevLatLng } = this.state;
     return haversine(prevLatLng, newLatLng) || 0;
   };
-  
+  showDetails =(line)=>{
+    console.log(line);
+  }
 
   render() {
-    
+    var busStrokeColorOpaque="rgba(255, 13, 1,1)";
+    var trainStrokeColorOpaque="rgba(148, 0, 211,1)";
+    var busStrokeColorTransp="rgba(255, 13, 1,0.3)";
+    var trainStrokeColorTransp="rgba(148, 0, 211,0.3)";
     return (
       <View style={styles.container}>
         <MapView
@@ -143,9 +149,28 @@ class smartWheels extends React.Component {
           
           initialRegion={this.getMapRegion()}
         >
-          <Polyline strokeColor="red"  coordinates={this.state.route6Coordinates} strokeWidth={5} />
-          <Polyline strokeColor="blue" coordinates={this.state.route5Coordinates} strokeWidth={5} />
+          
+          <Polyline strokeColor={this.state.selectedLine==6?busStrokeColorOpaque:busStrokeColorTransp}  coordinates={this.state.route6Coordinates} strokeWidth={this.state.selectedLine==6?10:5} />
+          <Polyline strokeColor={this.state.selectedLine==5?busStrokeColorOpaque:busStrokeColorTransp} coordinates={this.state.route5Coordinates} strokeWidth={this.state.selectedLine==5?10:5} />
+          <Polyline strokeColor={this.state.selectedLine=='IR01746'?trainStrokeColorOpaque:trainStrokeColorTransp} coordinates={this.state.routeBvCtCoordinates} strokeWidth={this.state.selectedLine=='IR01746'?10:5} />
+          <Polyline strokeColor={this.state.selectedLine=='IR1623'?trainStrokeColorOpaque:trainStrokeColorTransp} coordinates={this.state.routeBvSbCoordinates} strokeWidth={this.state.selectedLine=='IR1623'?10:5} />
           {this.state.busCoordinates.map(marker=>(
+          
+          <Marker.Animated
+            key={marker.id}
+            anchor={{ x: 0.5, y: 0.6 }}
+            ref={marker => {
+              this.marker = marker;
+            }}
+            onPress={()=>{this.setState({selectedLine:marker.line})}}
+            coordinate={{latitude:marker.latitude,longitude:marker.longitude}}
+
+          >
+            <Text style={{fontWeight:'bold', color:'rgb(255, 13, 0)',alignContent:'center',textAlign:'center'}}>Linia {marker.line}</Text>
+            <Icon color="rgb(255, 13, 0)" name="bus" reverse type="font-awesome"/>
+            </Marker.Animated>
+            ))}
+             {this.state.trainCoordinates.map(marker=>(
           
           <Marker.Animated
             key={marker.id}
@@ -155,18 +180,29 @@ class smartWheels extends React.Component {
             }}
           
             coordinate={{latitude:marker.latitude,longitude:marker.longitude}}
-
+            onPress={()=>{this.setState({selectedLine:marker.route})}}
           >
-            <Icon name="bus" reverse type="font-awesome"/>
+            <Text style={{fontWeight:'bold', color:'rgb(148, 0, 211)',alignContent:'center',textAlign:'center'}}>{marker.route}</Text>
+            <Icon color="rgb(148, 0, 211)"  name="train" reverse type="font-awesome" />
+            
             </Marker.Animated>
             ))}
         </MapView>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.bubble, styles.button]}>
             <Text style={styles.bottomBarContent}>
-              {parseFloat(this.state.distanceTravelled).toFixed(2)} km
+              {this.state.selectedLine==undefined?"Click pe o linie de tren sau autobuz pentru detalii":"Linia "+this.state.selectedLine}
             </Text>
+           
           </TouchableOpacity>
+          {this.state.selectedLine!=undefined ? <TouchableOpacity
+            onPress={() => this.showDetails(this.state.selectedLine)}
+            style={[styles.bubbleDetails, styles.button]}>
+            <Text style={styles.bottomBarContent}>
+              Detalii
+          </Text>
+
+          </TouchableOpacity> : null}
         </View>
       </View>
     );
@@ -203,7 +239,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginVertical: 20,
     backgroundColor: "transparent"
-  }
+  },
+  bubbleDetails: {
+    flex: 1,
+    backgroundColor: "rgba(32,137,220,0.7)",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 20
+  },
 });
 
 export default smartWheels;

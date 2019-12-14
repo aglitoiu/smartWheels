@@ -47,11 +47,11 @@ class fetchServerData extends React.Component {
     return responsss;
 
   }
-  getLocations = async () => {
+  getLocations = async (type) => {
 
 
     var resp;
-    const fetchServer = fetch(Host + 'index.php?req=getlocations',
+    const fetchServer = fetch(Host + 'index.php?req=getlocations&type='+type,
       {
         method: 'POST',
         headers: {

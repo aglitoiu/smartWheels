@@ -7,14 +7,14 @@ class serverClass extends React.Component {
     this.state = {};
 
   }
-  sendLocation = async (busid,latitude,longitude) => {
+  sendLocation = async (vehId,lineType,latitude,longitude) => {
 
 
     var resp;
 
     console.log(latitude);
     console.log(longitude);
-    const fetchServer = fetch(Host + 'index.php?req=updatebus',
+    const fetchServer = fetch(Host + 'index.php?req=updateveh',
     {
       method: 'POST',
       headers: {
@@ -24,9 +24,9 @@ class serverClass extends React.Component {
        body: JSON.stringify({
       
          latitude: latitude,
-      
+         lineType: lineType,
          longitude: longitude,
-         busid:busid,
+         vehId:vehId,
       
        })
 
@@ -37,7 +37,7 @@ class serverClass extends React.Component {
 
         console.log(responseJson);
       // If server response message same as Data Matched
-      return 'responseJson';
+      return responseJson;
 
 
 

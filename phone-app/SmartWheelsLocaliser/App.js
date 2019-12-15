@@ -17,22 +17,25 @@ import MapView, {
 import * as Permissions from "expo-permissions";
 import haversine from "haversine";
 var serverClass = require('./Classes/serverClass.js');
+var changeLineScreen = require('./Classes/Activities/changeLineScreen.js');
+import { createAppContainer } from 'react-navigation';
+import { createStackNavigator } from 'react-navigation-stack';
 // const LATITUDE = 29.95539;
 // const LONGITUDE = 78.07513;
 const LATITUDE_DELTA = 0.009;
 const LONGITUDE_DELTA = 0.009;
 const LATITUDE = 37.78825;
 const LONGITUDE = -122.4324;
-
-class AnimatedMarkers extends React.Component {
+var vehId;
+class smartWheelsLocaliser extends React.Component {
   constructor(props) {
     super(props);
-
+    
     this.state = {
-      busId:0,
+      vehId:0,
       latitude: LATITUDE,
       longitude: LONGITUDE,
-     
+      lineType:'',
       distanceTravelled: 0,
       prevLatLng: {},
       coordinate: new AnimatedRegion({
@@ -42,7 +45,13 @@ class AnimatedMarkers extends React.Component {
         longitudeDelta: 0
       })
     };
+
+
+
   }
+ 
+
+
   getLocationAsync() {
     // permissions returns only for location permissions on iOS and under certain conditions, see Permissions.LOCATION
     Permissions.askAsync(Permissions.LOCATION).then((promise) => {
@@ -56,13 +65,23 @@ class AnimatedMarkers extends React.Component {
       }
     });
   }
-  sendLocation = async(busid,latitude,longitude)=>{
+  sendLocation = async(vehId,lineType,latitude,longitude)=>{
     sendToServer=new serverClass();
-    await sendToServer.sendLocation(busid,latitude,longitude).then(function(resp){
+    await sendToServer.sendLocation(vehId,lineType,latitude,longitude).then(function(resp){
       
     }.bind(this));
   }
   componentDidMount() {
+    if(this.props.navigation.getParam("vehId")!=undefined){
+    this.setState({vehId:this.props.navigation.getParam("vehId"),lineType:this.props.navigation.getParam("lineType")});
+    console.log(this.state.lineType);
+    }
+    else{
+      this.setState({
+        vehId:1,
+        lineType:'bus',
+      })
+    }
     this.getLocationAsync();
     const { coordinate } = this.state;
 
@@ -79,7 +98,7 @@ class AnimatedMarkers extends React.Component {
       
           coordinate.timing(newCoordinate).start();
 
-        this.sendLocation(this.state.busId,newCoordinate.latitude,newCoordinate.longitude);
+        this.sendLocation(this.state.vehId,this.state.lineType,newCoordinate.latitude,newCoordinate.longitude);
         
 
         this.setState({
@@ -138,15 +157,10 @@ class AnimatedMarkers extends React.Component {
         </MapView>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.bubble, styles.button]}>
-          <Button
-  title="BusId:1"
-  type="clear"
-  onPress={()=>{this.setState({busId:1})}}
-/>
 <Button
-  title="BusId:2"
+  title="Schimba Linia"
   type="clear"
-  onPress={()=>{this.setState({busId:2})}}
+  onPress={()=>{this.props.navigation.replace("changeLineScreen")}}
 />
           </TouchableOpacity>
         </View>
@@ -187,5 +201,12 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent"
   }
 });
-
-export default AnimatedMarkers;
+const AppNavigator = createStackNavigator({
+  Home: {
+    screen: smartWheelsLocaliser,
+  },
+  changeLineScreen: {
+    screen: changeLineScreen,
+  },
+});
+export default createAppContainer(AppNavigator);

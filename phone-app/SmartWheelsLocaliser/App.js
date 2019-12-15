@@ -52,6 +52,7 @@ class smartWheelsLocaliser extends React.Component {
   static navigationOptions = {
     header: null
 }
+
  
 
 
